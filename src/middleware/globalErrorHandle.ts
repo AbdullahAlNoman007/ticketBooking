@@ -19,9 +19,10 @@ export type TgenaratedRespone = {
 }
 
 const globalErrorHandle: ErrorRequestHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
-    let message: string = "Error"
+    let message: string = err.sms || "Error"
     let errorMessage: string = err.message || "Error"
     let statusCode = 404
+
     if (err instanceof ZodError) {
         const simpleError = handleZodError(err);
         message = "Zod Error"
@@ -52,12 +53,21 @@ const globalErrorHandle: ErrorRequestHandler = (err: any, req: Request, res: Res
     else if (err instanceof Error) {
         errorMessage = err?.message
     }
+
+    if (err.statuCode === 401) {
+        message = "Unauthorized Access"
+        err = null;
+
+
+
+    }
+
     return res.status(404).json({
         success: false,
         message: message,
         errorMessage,
         errorDetails: err,
-        stack: err.stack
+        stack: err?.stack || null
     })
 }
 export default globalErrorHandle

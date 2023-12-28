@@ -24,16 +24,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.courseService = void 0;
+const http_status_1 = __importDefault(require("http-status"));
 const AppError_1 = __importDefault(require("../../Error/AppError"));
+const Category_model_1 = require("../Category/Category.model");
 const Review_model_1 = require("../Review/Review.model");
 const course_model_1 = require("./course.model");
-const createCourseIntoDB = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+const createCourseIntoDB = (payload, token) => __awaiter(void 0, void 0, void 0, function* () {
+    const category = yield Category_model_1.CategoryModel.findById(payload.categoryId);
+    if (!category) {
+        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "This category doesn't exists!");
+    }
+    payload.createdBy = token._id;
     const result1 = yield course_model_1.courseModel.create(payload);
     return result1;
 });
 const getCourseFromDB = (query) => __awaiter(void 0, void 0, void 0, function* () {
     const queryObj = Object.assign({}, query);
-    const queryBuilder = course_model_1.courseModel.find();
+    const queryBuilder = course_model_1.courseModel.find().populate({ path: 'createdBy', select: '_id username email role' });
     const excludeFields = ['sort', 'limit', 'page', 'fields', "startDate", "endDate", "minPrice", "maxPrice", 'tags', "sortOder", "level"];
     excludeFields.forEach(el => delete queryObj[el]);
     const filterQuery = queryBuilder.find(queryObj);
@@ -99,7 +106,7 @@ const updateCourseIntoDB = (id, payload) => __awaiter(void 0, void 0, void 0, fu
         const perfectUpdateTags = newUpdateTags.filter((tag) => tag.name != (deleteTags === null || deleteTags === void 0 ? void 0 : deleteTags.name));
         modifiedUpdatedData['tags'] = perfectUpdateTags;
     }
-    const result = yield course_model_1.courseModel.findByIdAndUpdate(id, modifiedUpdatedData, { new: true, upsert: true });
+    const result = yield course_model_1.courseModel.findByIdAndUpdate(id, modifiedUpdatedData, { new: true, upsert: true }).populate({ path: 'createdBy', select: '_id username email role' });
     return result;
 });
 const getCourseReviewFromDB = (id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -107,9 +114,9 @@ const getCourseReviewFromDB = (id) => __awaiter(void 0, void 0, void 0, function
     if (!exists) {
         throw new AppError_1.default(404, "Course doesn't Exists");
     }
-    const course = yield course_model_1.courseModel.findById(id);
+    const course = yield course_model_1.courseModel.findById(id).populate({ path: 'createdBy', select: '_id username email role' });
     const courseId = course === null || course === void 0 ? void 0 : course._id;
-    const reviews = yield Review_model_1.reviewModel.find({ courseId });
+    const reviews = yield Review_model_1.reviewModel.find({ courseId }).populate({ path: 'createdBy', select: '_id username email role' });
     const result = {
         course,
         reviews
@@ -131,7 +138,7 @@ const bestCourseInDB = () => __awaiter(void 0, void 0, void 0, function* () {
     }
     reviewArray.sort(sortFunc);
     const bestReview = reviewArray[reviewArray.length - 1];
-    const course = yield course_model_1.courseModel.findById(bestReview._id);
+    const course = yield course_model_1.courseModel.findById(bestReview._id).populate({ path: 'createdBy', select: '_id username email role' });
     const result = {
         course,
         averageRating: bestReview === null || bestReview === void 0 ? void 0 : bestReview.averageRating,

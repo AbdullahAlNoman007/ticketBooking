@@ -1,5 +1,7 @@
-
+import httpStatus from "http-status";
+import { JwtPayload } from "jsonwebtoken";
 import AppError from "../../Error/AppError";
+import { CategoryModel } from "../Category/Category.model";
 import { reviewModel } from "../Review/Review.model";
 import { TCourse, Tsort } from "./course.interface";
 import { courseModel } from "./course.model";
@@ -9,7 +11,13 @@ type Ttags = {
     isDeleted: boolean
 }
 
-const createCourseIntoDB = async (payload: TCourse) => {
+const createCourseIntoDB = async (payload: TCourse, token: JwtPayload) => {
+    const category = await CategoryModel.findById(payload.categoryId)
+    if (!category) {
+        throw new AppError(httpStatus.BAD_REQUEST, "This category doesn't exists!")
+    }
+
+    payload.createdBy = token._id
     const result1 = await courseModel.create(payload)
     return result1
 
@@ -18,7 +26,7 @@ const createCourseIntoDB = async (payload: TCourse) => {
 const getCourseFromDB = async (query: Record<string, unknown>) => {
 
     const queryObj = { ...query }
-    const queryBuilder = courseModel.find()
+    const queryBuilder = courseModel.find().populate({ path: 'createdBy', select: '_id username email role' })
 
 
     const excludeFields = ['sort', 'limit', 'page', 'fields', "startDate", "endDate", "minPrice", "maxPrice", 'tags', "sortOder", "level"]
@@ -97,7 +105,7 @@ const updateCourseIntoDB = async (id: string, payload: Partial<TCourse>) => {
         const perfectUpdateTags = newUpdateTags.filter((tag) => tag.name != deleteTags?.name)
         modifiedUpdatedData['tags'] = perfectUpdateTags
     }
-    const result = await courseModel.findByIdAndUpdate(id, modifiedUpdatedData, { new: true, upsert: true })
+    const result = await courseModel.findByIdAndUpdate(id, modifiedUpdatedData, { new: true, upsert: true }).populate({ path: 'createdBy', select: '_id username email role' })
     return result
 
 }
@@ -106,9 +114,11 @@ const getCourseReviewFromDB = async (id: string) => {
     if (!exists) {
         throw new AppError(404, "Course doesn't Exists")
     }
-    const course = await courseModel.findById(id)
+    const course = await courseModel.findById(id).populate({ path: 'createdBy', select: '_id username email role' })
+
     const courseId = course?._id
-    const reviews = await reviewModel.find({ courseId })
+    const reviews = await reviewModel.find({ courseId }).populate({ path: 'createdBy', select: '_id username email role' })
+
     const result = {
         course,
         reviews
@@ -130,7 +140,7 @@ const bestCourseInDB = async () => {
     }
     reviewArray.sort(sortFunc)
     const bestReview: Tsort = reviewArray[reviewArray.length - 1]
-    const course = await courseModel.findById(bestReview._id)
+    const course = await courseModel.findById(bestReview._id).populate({ path: 'createdBy', select: '_id username email role' })
     const result = {
         course,
         averageRating: bestReview?.averageRating,

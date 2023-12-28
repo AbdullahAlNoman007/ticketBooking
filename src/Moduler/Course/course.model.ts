@@ -62,7 +62,13 @@ const TcourseSchema = new Schema<TCourse>({
     durationInWeeks: {
         type: Number
     },
-    details: TdetailsSchema
+    details: TdetailsSchema,
+    createdBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'user'
+    }
+}, {
+    timestamps: true
 })
 
 TcourseSchema.pre('save', async function () {

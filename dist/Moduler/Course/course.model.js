@@ -70,7 +70,13 @@ const TcourseSchema = new mongoose_1.Schema({
     durationInWeeks: {
         type: Number
     },
-    details: TdetailsSchema
+    details: TdetailsSchema,
+    createdBy: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'user'
+    }
+}, {
+    timestamps: true
 });
 TcourseSchema.pre('save', function () {
     return __awaiter(this, void 0, void 0, function* () {

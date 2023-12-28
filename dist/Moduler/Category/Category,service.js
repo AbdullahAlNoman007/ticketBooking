@@ -11,12 +11,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.categoryService = void 0;
 const Category_model_1 = require("./Category.model");
-const createCategoryIntoDB = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+const createCategoryIntoDB = (payload, token) => __awaiter(void 0, void 0, void 0, function* () {
+    payload.createdBy = token._id;
     const result = yield Category_model_1.CategoryModel.create(payload);
     return result;
 });
 const getCategoryFromDB = () => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield Category_model_1.CategoryModel.find({});
+    const result = yield Category_model_1.CategoryModel.find({}).populate({ path: 'createdBy', select: '_id username email role' });
     return result;
 });
 exports.categoryService = {

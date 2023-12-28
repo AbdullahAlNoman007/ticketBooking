@@ -19,7 +19,7 @@ const trycatch_1 = __importDefault(require("../../utility/trycatch"));
 const Category_service_1 = require("./Category,service");
 const createCategory = (0, trycatch_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const payload = req.body;
-    const result = yield Category_service_1.categoryService.createCategoryIntoDB(payload);
+    const result = yield Category_service_1.categoryService.createCategoryIntoDB(payload, req.user);
     (0, sendResponse_1.default)(res, {
         success: true,
         statusCode: http_status_1.default.CREATED,

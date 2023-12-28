@@ -10,7 +10,7 @@ const CastError_1 = __importDefault(require("../Error/CastError"));
 const duplicateError_1 = __importDefault(require("../Error/duplicateError"));
 const AppError_1 = __importDefault(require("../Error/AppError"));
 const globalErrorHandle = (err, req, res, next) => {
-    let message = "Error";
+    let message = err.sms || "Error";
     let errorMessage = err.message || "Error";
     let statusCode = 404;
     if (err instanceof zod_1.ZodError) {
@@ -44,12 +44,16 @@ const globalErrorHandle = (err, req, res, next) => {
     else if (err instanceof Error) {
         errorMessage = err === null || err === void 0 ? void 0 : err.message;
     }
+    if (err.statuCode === 401) {
+        message = "Unauthorized Access";
+        err = null;
+    }
     return res.status(404).json({
         success: false,
         message: message,
         errorMessage,
         errorDetails: err,
-        stack: err.stack
+        stack: (err === null || err === void 0 ? void 0 : err.stack) || null
     });
 };
 exports.default = globalErrorHandle;

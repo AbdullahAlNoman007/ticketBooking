@@ -20,7 +20,8 @@ export type TCourse = {
     language: string;
     provider: string;
     durationInWeeks: number;
-    details: Tdetails
+    details: Tdetails;
+    createdBy?: Types.ObjectId
 }
 
 export type Tsort = {

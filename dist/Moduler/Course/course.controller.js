@@ -19,7 +19,7 @@ const trycatch_1 = __importDefault(require("../../utility/trycatch"));
 const course_service_1 = require("./course.service");
 const createCourse = (0, trycatch_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const payload = req.body;
-    const result = yield course_service_1.courseService.createCourseIntoDB(payload);
+    const result = yield course_service_1.courseService.createCourseIntoDB(payload, req.user);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.CREATED,
         success: true,
