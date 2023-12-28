@@ -13,7 +13,7 @@ app.use(express_1.default.json());
 app.use((0, cors_1.default)());
 app.use('/api', router_1.default);
 app.get('/', (req, res) => {
-    res.send("Hello Assignment 3: Course Review");
+    res.send("Hello Assignment 4: Course Management System");
 });
 app.use(globalErrorHandle_1.default);
 app.use(notFound_1.default);
