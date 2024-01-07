@@ -7,7 +7,7 @@ const handleValidationError = (err) => {
         if (value.name === 'ValidatorError') {
             errorMessage += `${value.path} is ${value.kind} | `;
         }
-        else if (value.name === "CastError") {
+        else if (value.name === 'CastError') {
             const match = value === null || value === void 0 ? void 0 : value.stringValue.match(/"([^"]*)"/);
             const givenValue = match && match[1];
             errorMessage += `${value.path} is ${value.kind} but Given value is ${givenValue} | `;
@@ -15,7 +15,7 @@ const handleValidationError = (err) => {
     });
     return {
         statusCode,
-        errorMessage
+        errorMessage,
     };
 };
 exports.default = handleValidationError;

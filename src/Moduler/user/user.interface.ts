@@ -1,23 +1,8 @@
-export interface TpasswordHistory {
-    password: string;
-}
-
-export interface Tuser {
-    username: string;
-    email: string;
-    password: string;
-    passwordHistory?: TpasswordHistory[];
-    role: 'user' | 'admin';
-    createdAt?: Date;
-    updatedAt?: Date;
-}
-
-export interface Tlogin {
-    username: string;
-    password: string;
-}
-
-export interface TchangePassword {
-    currentPassword: string;
-    newPassword: string;
-}
+export type Tuser = {
+  id: string;
+  email: string;
+  password: string;
+  role: 'buyer' | 'seller' | 'driver' | 'admin';
+  status: 'in-progress' | 'blocked';
+  isDeleted: boolean;
+};

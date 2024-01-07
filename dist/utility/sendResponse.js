@@ -7,7 +7,7 @@ const sendRespone = (res, data) => {
             statusCode: data === null || data === void 0 ? void 0 : data.statusCode,
             message: data === null || data === void 0 ? void 0 : data.message,
             meta: data === null || data === void 0 ? void 0 : data.meta,
-            data: data === null || data === void 0 ? void 0 : data.data
+            data: data === null || data === void 0 ? void 0 : data.data,
         });
     }
     else {
@@ -15,7 +15,7 @@ const sendRespone = (res, data) => {
             success: data === null || data === void 0 ? void 0 : data.success,
             statusCode: data === null || data === void 0 ? void 0 : data.statusCode,
             message: data === null || data === void 0 ? void 0 : data.message,
-            data: data === null || data === void 0 ? void 0 : data.data
+            data: data === null || data === void 0 ? void 0 : data.data,
         });
     }
 };

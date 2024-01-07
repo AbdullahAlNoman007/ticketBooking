@@ -8,7 +8,7 @@ const notFound = (req, res) => {
     return res.status(http_status_1.default.NOT_FOUND).json({
         success: false,
         message: 'Give a valid route!!!',
-        error: 'API NOT FOUND'
+        error: 'API NOT FOUND',
     });
 };
 exports.default = notFound;

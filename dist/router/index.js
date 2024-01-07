@@ -4,28 +4,38 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const Category_router_1 = require("../Moduler/Category/Category.router");
-const course_router_1 = require("../Moduler/Course/course.router");
-const Review_router_1 = require("../Moduler/Review/Review.router");
-const user_router_1 = require("../Moduler/user/user.router");
+const user_router_1 = require("../Moduler/User/user.router");
+const member_router_1 = require("../Moduler/Member/member.router");
+const auth_router_1 = require("../Moduler/auth/auth.router");
+const bus_router_1 = require("../Moduler/Bus/bus.router");
+const offeredJourney_router_1 = require("../Moduler/offeredJourney/offeredJourney.router");
+const booking_router_1 = require("../Moduler/Booking/booking.router");
 const router = express_1.default.Router();
 const moduleRouters = [
     {
-        path: '/',
-        router: course_router_1.courseRouter
+        path: '/user',
+        router: user_router_1.userRouter,
     },
     {
-        path: '/categories',
-        router: Category_router_1.categoryRouter
-    },
-    {
-        path: '/reviews',
-        router: Review_router_1.reviewRouter
+        path: '/user',
+        router: member_router_1.memberRouter,
     },
     {
         path: '/auth',
-        router: user_router_1.authRouter
+        router: auth_router_1.authRouter,
+    },
+    {
+        path: '/bus',
+        router: bus_router_1.busRouter,
+    },
+    {
+        path: '/offeredJourney',
+        router: offeredJourney_router_1.offeredJourneyRouter,
+    },
+    {
+        path: '/booking',
+        router: booking_router_1.bookingRouter,
     },
 ];
-moduleRouters.map(route => router.use(route.path, route.router));
+moduleRouters.map((route) => router.use(route.path, route.router));
 exports.default = router;

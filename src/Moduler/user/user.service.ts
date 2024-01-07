@@ -1,116 +1,149 @@
-import { TchangePassword, Tlogin, Tuser } from "./user.interface";
-import bcrypt from 'bcrypt'
-import config from "../../config";
-import { userModel } from "./user.model";
-import AppError from "../../Error/AppError";
-import httpStatus from "http-status";
-import { createToken } from "./user.utils";
-import { JwtPayload } from "jsonwebtoken";
+import mongoose from 'mongoose';
+import { Tmember } from '../Member/member.interface';
+import { Tuser } from './user.interface';
+import generateId from './user.utils';
+import { UserModel } from './user.model';
+import AppError from '../../Error/AppError';
+import httpStatus from 'http-status';
+import {
+  adminModel,
+  buyerModel,
+  driverModel,
+  sellerModel,
+} from '../Member/member.model';
 
-const registerUserIntoDB = async (payload: Tuser) => {
-    const hashPassword = await bcrypt.hash(payload.password, Number(config.salt_round));
-    payload.password = hashPassword
+const createBuyerIntoDB = async (password: string, payload: Tmember) => {
+  const user: Partial<Tuser> = {};
+  user.password = password;
+  user.email = payload.email;
+  user.role = 'buyer';
 
-    const result = await userModel.create(payload)
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+    user.id = (await generateId('buyer')) as string;
 
-    if (!result) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Failed to create user!")
+    const newUser = await UserModel.create([user], { session });
+    if (!newUser.length) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create user');
     }
-    const finalResult = {
-        _id: result._id,
-        username: result.username,
-        email: result.email,
-        role: result.role,
-        createdAt: result?.createdAt,
-        updatedAt: result?.updatedAt,
-    };
+    payload.id = newUser[0].id;
+    payload.user = newUser[0]._id;
 
-    return finalResult
-
-}
-
-const loginIntoDB = async (payload: Tlogin) => {
-    const isUserExists = await userModel.findOne({ username: payload.username })
-    if (!isUserExists) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User doesn't exists!")
-    }
-    const jwtpayload = {
-        _id: (isUserExists?._id).toString(),
-        email: isUserExists?.email,
-        role: isUserExists?.role,
-    }
-    const username = isUserExists?.username
-
-    const token = createToken(jwtpayload, config.token_secret as string, '10d')
-
-    if (!token) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Failed to create access token")
+    const newBuyer = await buyerModel.create([payload], { session });
+    if (!newBuyer.length) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create Buyer');
     }
 
-    const isPasswordMatch = await bcrypt.compare(payload.password, isUserExists?.password)
+    await session.commitTransaction();
+    await session.endSession();
+    return newBuyer;
+  } catch (error: any) {
+    await session.abortTransaction();
+    await session.endSession();
+    throw new Error(error);
+  }
+};
+const createSellerIntoDB = async (password: string, payload: Tmember) => {
+  const user: Partial<Tuser> = {};
+  user.password = password;
+  user.email = payload.email;
+  user.role = 'seller';
 
-    if (!isPasswordMatch) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Password doesn't match")
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+    user.id = (await generateId('seller')) as string;
+
+    const newUser = await UserModel.create([user], { session });
+    if (!newUser.length) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create user');
+    }
+    payload.id = newUser[0].id;
+    payload.user = newUser[0]._id;
+
+    const newSeller = await sellerModel.create([payload], { session });
+    if (!newSeller.length) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create Seller');
     }
 
-    const user = { ...jwtpayload, username }
-    const result = {
-        user,
-        token
+    await session.commitTransaction();
+    await session.endSession();
+    return newSeller;
+  } catch (error: any) {
+    await session.abortTransaction();
+    await session.endSession();
+    throw new Error(error);
+  }
+};
+const createDriverIntoDB = async (password: string, payload: Tmember) => {
+  const user: Partial<Tuser> = {};
+  user.password = password;
+  user.email = payload.email;
+  user.role = 'driver';
+
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+    user.id = (await generateId('driver')) as string;
+
+    const newUser = await UserModel.create([user], { session });
+    if (!newUser.length) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create user');
     }
-    return result
-}
+    payload.id = newUser[0].id;
+    payload.user = newUser[0]._id;
 
-const changePasswordInDB = async (token: JwtPayload, payload: TchangePassword) => {
-
-    const user = await userModel.findById(token._id)
-
-    if (payload?.currentPassword === payload?.newPassword) {
-        throw new AppError(httpStatus.BAD_REQUEST, "New password & old Password is same!")
+    const newDriver = await driverModel.create([payload], { session });
+    if (!newDriver.length) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create Driver');
     }
 
-    const isPasswordMatch = await bcrypt.compare(payload?.currentPassword, user?.password as string)
+    await session.commitTransaction();
+    await session.endSession();
+    return newDriver;
+  } catch (error: any) {
+    await session.abortTransaction();
+    await session.endSession();
+    throw new Error(error);
+  }
+};
+const createAdminIntoDB = async (password: string, payload: Tmember) => {
+  const user: Partial<Tuser> = {};
+  user.password = password;
+  user.email = payload.email;
+  user.role = 'admin';
 
-    if (!isPasswordMatch) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Password doesn't match")
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+    user.id = (await generateId('admin')) as string;
+
+    const newUser = await UserModel.create([user], { session });
+    if (!newUser.length) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create user');
     }
-    const hashNewPassword = await bcrypt.hash(payload?.newPassword, Number(config.salt_round));
+    payload.id = newUser[0].id;
+    payload.user = newUser[0]._id;
 
-    let passwordHistory = user?.passwordHistory
-
-    for (const pass of passwordHistory || []) {
-        if (await bcrypt.compare(payload?.newPassword, pass?.password as string)) {
-            throw new AppError(httpStatus.BAD_REQUEST, "New password matches a previous password");
-        }
+    const newAdmin = await adminModel.create([payload], { session });
+    if (!newAdmin.length) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create Admin');
     }
 
-    const lastPassword = user?.password as string
-
-    passwordHistory?.push({ password: lastPassword })
-    passwordHistory = passwordHistory?.slice(-2)
-
-    const result = await userModel.findByIdAndUpdate(token._id, {
-        password: hashNewPassword,
-        passwordHistory
-    }, { new: true, upsert: true })
-
-    const finalResult = {
-        _id: result._id,
-        username: result.username,
-        email: result.email,
-        role: result.role,
-        createdAt: result?.createdAt,
-        updatedAt: result?.updatedAt,
-    };
-
-    return finalResult
-
-
-
-}
+    await session.commitTransaction();
+    await session.endSession();
+    return newAdmin;
+  } catch (error: any) {
+    await session.abortTransaction();
+    await session.endSession();
+    throw new Error(error);
+  }
+};
 
 export const userService = {
-    registerUserIntoDB,
-    loginIntoDB,
-    changePasswordInDB
-}
+  createBuyerIntoDB,
+  createDriverIntoDB,
+  createSellerIntoDB,
+  createAdminIntoDB,
+};

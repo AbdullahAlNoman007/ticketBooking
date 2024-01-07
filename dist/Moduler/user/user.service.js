@@ -13,90 +13,131 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userService = void 0;
-const bcrypt_1 = __importDefault(require("bcrypt"));
-const config_1 = __importDefault(require("../../config"));
+const mongoose_1 = __importDefault(require("mongoose"));
+const user_utils_1 = __importDefault(require("./user.utils"));
 const user_model_1 = require("./user.model");
 const AppError_1 = __importDefault(require("../../Error/AppError"));
 const http_status_1 = __importDefault(require("http-status"));
-const user_utils_1 = require("./user.utils");
-const registerUserIntoDB = (payload) => __awaiter(void 0, void 0, void 0, function* () {
-    const hashPassword = yield bcrypt_1.default.hash(payload.password, Number(config_1.default.salt_round));
-    payload.password = hashPassword;
-    const result = yield user_model_1.userModel.create(payload);
-    if (!result) {
-        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Failed to create user!");
-    }
-    const finalResult = {
-        _id: result._id,
-        username: result.username,
-        email: result.email,
-        role: result.role,
-        createdAt: result === null || result === void 0 ? void 0 : result.createdAt,
-        updatedAt: result === null || result === void 0 ? void 0 : result.updatedAt,
-    };
-    return finalResult;
-});
-const loginIntoDB = (payload) => __awaiter(void 0, void 0, void 0, function* () {
-    const isUserExists = yield user_model_1.userModel.findOne({ username: payload.username });
-    if (!isUserExists) {
-        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "User doesn't exists!");
-    }
-    const jwtpayload = {
-        _id: (isUserExists === null || isUserExists === void 0 ? void 0 : isUserExists._id).toString(),
-        email: isUserExists === null || isUserExists === void 0 ? void 0 : isUserExists.email,
-        role: isUserExists === null || isUserExists === void 0 ? void 0 : isUserExists.role,
-    };
-    const username = isUserExists === null || isUserExists === void 0 ? void 0 : isUserExists.username;
-    const token = (0, user_utils_1.createToken)(jwtpayload, config_1.default.token_secret, '10d');
-    if (!token) {
-        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Failed to create access token");
-    }
-    const isPasswordMatch = yield bcrypt_1.default.compare(payload.password, isUserExists === null || isUserExists === void 0 ? void 0 : isUserExists.password);
-    if (!isPasswordMatch) {
-        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Password doesn't match");
-    }
-    const user = Object.assign(Object.assign({}, jwtpayload), { username });
-    const result = {
-        user,
-        token
-    };
-    return result;
-});
-const changePasswordInDB = (token, payload) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = yield user_model_1.userModel.findById(token._id);
-    if ((payload === null || payload === void 0 ? void 0 : payload.currentPassword) === (payload === null || payload === void 0 ? void 0 : payload.newPassword)) {
-        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "New password & old Password is same!");
-    }
-    const isPasswordMatch = yield bcrypt_1.default.compare(payload === null || payload === void 0 ? void 0 : payload.currentPassword, user === null || user === void 0 ? void 0 : user.password);
-    if (!isPasswordMatch) {
-        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Password doesn't match");
-    }
-    const hashNewPassword = yield bcrypt_1.default.hash(payload === null || payload === void 0 ? void 0 : payload.newPassword, Number(config_1.default.salt_round));
-    let passwordHistory = user === null || user === void 0 ? void 0 : user.passwordHistory;
-    for (const pass of passwordHistory || []) {
-        if (yield bcrypt_1.default.compare(payload === null || payload === void 0 ? void 0 : payload.newPassword, pass === null || pass === void 0 ? void 0 : pass.password)) {
-            throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "New password matches a previous password");
+const member_model_1 = require("../Member/member.model");
+const createBuyerIntoDB = (password, payload) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = {};
+    user.password = password;
+    user.email = payload.email;
+    user.role = 'buyer';
+    const session = yield mongoose_1.default.startSession();
+    try {
+        session.startTransaction();
+        user.id = (yield (0, user_utils_1.default)('buyer'));
+        const newUser = yield user_model_1.UserModel.create([user], { session });
+        if (!newUser.length) {
+            throw new AppError_1.default(http_status_1.default.BAD_REQUEST, 'Failed to create user');
         }
+        payload.id = newUser[0].id;
+        payload.user = newUser[0]._id;
+        const newBuyer = yield member_model_1.buyerModel.create([payload], { session });
+        if (!newBuyer.length) {
+            throw new AppError_1.default(http_status_1.default.BAD_REQUEST, 'Failed to create Buyer');
+        }
+        yield session.commitTransaction();
+        yield session.endSession();
+        return newBuyer;
     }
-    const lastPassword = user === null || user === void 0 ? void 0 : user.password;
-    passwordHistory === null || passwordHistory === void 0 ? void 0 : passwordHistory.push({ password: lastPassword });
-    passwordHistory = passwordHistory === null || passwordHistory === void 0 ? void 0 : passwordHistory.slice(-2);
-    const result = yield user_model_1.userModel.findByIdAndUpdate(token._id, {
-        password: hashNewPassword,
-        passwordHistory
-    }, { new: true, upsert: true });
-    const finalResult = {
-        _id: result._id,
-        username: result.username,
-        email: result.email,
-        role: result.role,
-        createdAt: result === null || result === void 0 ? void 0 : result.createdAt,
-        updatedAt: result === null || result === void 0 ? void 0 : result.updatedAt,
-    };
-    return finalResult;
+    catch (error) {
+        yield session.abortTransaction();
+        yield session.endSession();
+        throw new Error(error);
+    }
+});
+const createSellerIntoDB = (password, payload) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = {};
+    user.password = password;
+    user.email = payload.email;
+    user.role = 'seller';
+    const session = yield mongoose_1.default.startSession();
+    try {
+        session.startTransaction();
+        user.id = (yield (0, user_utils_1.default)('seller'));
+        const newUser = yield user_model_1.UserModel.create([user], { session });
+        if (!newUser.length) {
+            throw new AppError_1.default(http_status_1.default.BAD_REQUEST, 'Failed to create user');
+        }
+        payload.id = newUser[0].id;
+        payload.user = newUser[0]._id;
+        const newSeller = yield member_model_1.sellerModel.create([payload], { session });
+        if (!newSeller.length) {
+            throw new AppError_1.default(http_status_1.default.BAD_REQUEST, 'Failed to create Seller');
+        }
+        yield session.commitTransaction();
+        yield session.endSession();
+        return newSeller;
+    }
+    catch (error) {
+        yield session.abortTransaction();
+        yield session.endSession();
+        throw new Error(error);
+    }
+});
+const createDriverIntoDB = (password, payload) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = {};
+    user.password = password;
+    user.email = payload.email;
+    user.role = 'driver';
+    const session = yield mongoose_1.default.startSession();
+    try {
+        session.startTransaction();
+        user.id = (yield (0, user_utils_1.default)('driver'));
+        const newUser = yield user_model_1.UserModel.create([user], { session });
+        if (!newUser.length) {
+            throw new AppError_1.default(http_status_1.default.BAD_REQUEST, 'Failed to create user');
+        }
+        payload.id = newUser[0].id;
+        payload.user = newUser[0]._id;
+        const newDriver = yield member_model_1.driverModel.create([payload], { session });
+        if (!newDriver.length) {
+            throw new AppError_1.default(http_status_1.default.BAD_REQUEST, 'Failed to create Driver');
+        }
+        yield session.commitTransaction();
+        yield session.endSession();
+        return newDriver;
+    }
+    catch (error) {
+        yield session.abortTransaction();
+        yield session.endSession();
+        throw new Error(error);
+    }
+});
+const createAdminIntoDB = (password, payload) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = {};
+    user.password = password;
+    user.email = payload.email;
+    user.role = 'admin';
+    const session = yield mongoose_1.default.startSession();
+    try {
+        session.startTransaction();
+        user.id = (yield (0, user_utils_1.default)('admin'));
+        const newUser = yield user_model_1.UserModel.create([user], { session });
+        if (!newUser.length) {
+            throw new AppError_1.default(http_status_1.default.BAD_REQUEST, 'Failed to create user');
+        }
+        payload.id = newUser[0].id;
+        payload.user = newUser[0]._id;
+        const newAdmin = yield member_model_1.adminModel.create([payload], { session });
+        if (!newAdmin.length) {
+            throw new AppError_1.default(http_status_1.default.BAD_REQUEST, 'Failed to create Admin');
+        }
+        yield session.commitTransaction();
+        yield session.endSession();
+        return newAdmin;
+    }
+    catch (error) {
+        yield session.abortTransaction();
+        yield session.endSession();
+        throw new Error(error);
+    }
 });
 exports.userService = {
-    registerUserIntoDB,
-    loginIntoDB,
-    changePasswordInDB
+    createBuyerIntoDB,
+    createDriverIntoDB,
+    createSellerIntoDB,
+    createAdminIntoDB,
 };

@@ -1,11 +1,11 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const handleCastError = (err: mongoose.Error.CastError) => {
-    const statusCode = 400
-    let errorMessage: string = err.message
-    return {
-        statusCode,
-        errorMessage
-    }
-}
-export default handleCastError
+  const statusCode = 400;
+  const errorMessage: string = err.message;
+  return {
+    statusCode,
+    errorMessage,
+  };
+};
+export default handleCastError;

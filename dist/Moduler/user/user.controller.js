@@ -17,35 +17,55 @@ const http_status_1 = __importDefault(require("http-status"));
 const sendResponse_1 = __importDefault(require("../../utility/sendResponse"));
 const trycatch_1 = __importDefault(require("../../utility/trycatch"));
 const user_service_1 = require("./user.service");
-const registerUser = (0, trycatch_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield user_service_1.userService.registerUserIntoDB(req.body);
+const bcrypt_1 = __importDefault(require("bcrypt"));
+const config_1 = __importDefault(require("../../config"));
+const createBuyer = (0, trycatch_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { password, user } = req.body;
+    const hashPassword = yield bcrypt_1.default.hash(password, Number(config_1.default.salt_round));
+    const result = yield user_service_1.userService.createBuyerIntoDB(hashPassword, user);
     (0, sendResponse_1.default)(res, {
+        success: true,
         statusCode: http_status_1.default.CREATED,
-        success: true,
-        message: 'User registered successfully',
-        data: result
+        message: 'Buyer created Successfully',
+        data: result,
     });
 }));
-const login = (0, trycatch_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield user_service_1.userService.loginIntoDB(req.body);
+const createSeller = (0, trycatch_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { password, user } = req.body;
+    const hashPassword = yield bcrypt_1.default.hash(password, Number(config_1.default.salt_round));
+    const result = yield user_service_1.userService.createSellerIntoDB(hashPassword, user);
     (0, sendResponse_1.default)(res, {
-        statusCode: http_status_1.default.OK,
         success: true,
-        message: 'User login successful',
-        data: result
+        statusCode: http_status_1.default.CREATED,
+        message: 'Seller created Successfully',
+        data: result,
     });
 }));
-const changePassword = (0, trycatch_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield user_service_1.userService.changePasswordInDB(req.user, req.body);
+const createDriver = (0, trycatch_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { password, user } = req.body;
+    const hashPassword = yield bcrypt_1.default.hash(password, Number(config_1.default.salt_round));
+    const result = yield user_service_1.userService.createDriverIntoDB(hashPassword, user);
     (0, sendResponse_1.default)(res, {
-        statusCode: http_status_1.default.OK,
         success: true,
-        message: 'Password changed successfully',
-        data: result
+        statusCode: http_status_1.default.CREATED,
+        message: 'Driver created Successfully',
+        data: result,
+    });
+}));
+const createAdmin = (0, trycatch_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { password, user } = req.body;
+    const hashPassword = yield bcrypt_1.default.hash(password, Number(config_1.default.salt_round));
+    const result = yield user_service_1.userService.createAdminIntoDB(hashPassword, user);
+    (0, sendResponse_1.default)(res, {
+        success: true,
+        statusCode: http_status_1.default.CREATED,
+        message: 'Admin created Successfully',
+        data: result,
     });
 }));
 exports.userController = {
-    registerUser,
-    login,
-    changePassword
+    createBuyer,
+    createSeller,
+    createDriver,
+    createAdmin,
 };
