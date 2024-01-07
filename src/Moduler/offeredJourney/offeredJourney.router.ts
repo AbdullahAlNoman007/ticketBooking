@@ -16,7 +16,6 @@ router.post(
 
 router.get(
   '/get-offeredJourney',
-  auth(userRole.admin),
   offeredJourneyController.getAllOfferedJourney,
 );
 
