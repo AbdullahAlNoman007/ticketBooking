@@ -14,7 +14,7 @@ c. nodemon
 
 ###Step for running the server###
 
-1. Clone the Repository: https://github.com/your-username/course-management.git
+1. Clone the Repository: https://github.com/Alnoman22/ticketBooking.git
 
 2. Install Dependencies: npm install
 
